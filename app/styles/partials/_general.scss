@@ -50,14 +50,17 @@ body {
     background: #eee;
     padding: 10px;
     border-radius: 10px;
-    max-width: 92px;
+    max-width: 100px;
     button {
         padding: 10px 15px;
-        width: 40px;
+        width: 44px;
         border-radius: 20px;
         margin: 3px; 
         font-size: 14px;
         cursor: pointer;
+        border-width: 2px;
+        border-color: transparent;
+        outline: none;
     }
 }
 

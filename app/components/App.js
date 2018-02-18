@@ -157,8 +157,12 @@ function View({ dispatch, state }) {
 			</div>
 		</div>
 	);
-	const panel = floors.map(floor =>
-		<button key={floor} onClick={() => onCallInside(dispatch, floor)}>{floor}</button>
+	const panel = floors.map(floor =>{
+		const btnStyle = (state.targetFloor == floor && state.currentFloor != floor)? {borderColor: '#00e600'} : {}
+		return <button key={floor}
+			style={btnStyle}
+			onClick={() => onCallInside(dispatch, floor)}>{floor}</button>;
+	}
 	)
 	return (
 		<div className='elevator'>
