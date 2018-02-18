@@ -1,0 +1,26 @@
+
+
+body {
+    font-family: $sans;
+}
+
+#floors{ 
+    border: 7px solid lightgrey;
+    width: 100px;
+    margin: auto;
+
+}
+
+.floor{
+    border: 10px solid #ede;
+}
+
+.floor-indicator{
+    font-size: 20px;
+    padding: 10px;
+    border: 1px solid #ddd;
+    background: white;
+}
+.current-floor{
+    color: red;
+}
