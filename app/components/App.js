@@ -4,13 +4,17 @@ import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 
 
-const floors = [0,1,2,3,4,5,6];
+const floors = [0, 1, 2, 3, 4, 5, 6];
 
-const floorsJSX = floors.map(floor=>
+const floorsJSX = floors.map(floor =>
 	<div className="floor" key={floor}>
 		<div className='floor-indicator'>{floor}</div>
+		<div className='buttons'>
+			<button>UP</button>
+			<button>DOWN</button>
+		</div>
 	</div>
-	);
+);
 
 export default class App extends Component {
 	render() {

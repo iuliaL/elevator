@@ -8,11 +8,19 @@ body {
     border: 7px solid lightgrey;
     width: 100px;
     margin: auto;
-
 }
 
 .floor{
-    border: 10px solid #ede;
+    border: 10px solid #eee;
+    display: flex;
+    .buttons {
+        align-self: center;
+    }
+    button {
+        display: block;
+        width: 100%;
+        padding: 4px 8px
+    }
 }
 
 .floor-indicator{
@@ -24,3 +32,5 @@ body {
 .current-floor{
     color: red;
 }
+
+
