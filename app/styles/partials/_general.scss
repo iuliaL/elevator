@@ -7,11 +7,11 @@ body {
 #floors{ 
     border: 7px solid lightgrey;
     width: 100px;
-    margin: auto;
 }
 
 .floor{
-    border: 10px solid #eee;
+    background: #dee;
+    padding: 4px 5px;
     display: flex;
     .buttons {
         align-self: center;
@@ -19,7 +19,8 @@ body {
     button {
         display: block;
         width: 100%;
-        padding: 4px 8px
+        padding: 4px 8px;
+        cursor: pointer;
     }
 }
 
@@ -29,8 +30,32 @@ body {
     border: 1px solid #ddd;
     background: white;
 }
+
 .current-floor{
     color: red;
+}
+.elevator{
+    display: flex;
+    justify-content: center;
+}
+
+.panel{
+    align-self: center;
+    display: flex;
+    flex-wrap: wrap;
+    margin-right: 40px;
+    background: #eee;
+    padding: 10px;
+    border-radius: 10px;
+    max-width: 92px;
+    button {
+        padding: 10px 15px;
+        width: 40px;
+        border-radius: 20px;
+        margin: 3px; 
+        font-size: 14px;
+        cursor: pointer;
+    }
 }
 
 

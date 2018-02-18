@@ -1,46 +1,89 @@
 'use strict';
 
-import React, { Component } from 'react';
+import React from 'react';
 import PropTypes from 'prop-types';
 
+export {
+	init,
+	View,
+	reducer
+};
 
-const floors = [0, 1, 2, 3, 4, 5, 6];
+// MODEL
 
-const floorsJSX = floors.map(floor =>
-	<div className="floor" key={floor}>
-		<div className='floor-indicator'>{floor}</div>
-		<div className='buttons'>
-			<button>UP</button>
-			<button>DOWN</button>
-		</div>
-	</div>
-);
+const init = {
+	currentFloor: 0,
+	targetFloor: 0,
+	direction: 'UP'
+};
 
-export default class App extends Component {
-	render() {
-		return (
-			<div id='floors'>{floorsJSX}</div>
-		);
+const ActionTypes = {
+	CALLED_OUTSIDE : { type: 'CALLED OUTSIDE' }, // expects direction, fromFloor
+	CALLED_INSIDE: {type: 'CALLED INSIDE' } // expects toFloor
+};
+
+// UPDATE
+
+function reducer(state = init, action) {
+	switch (action.type){
+		case ActionTypes.CALLED_OUTSIDE.type:
+			return {
+				...state,
+				targetFloor: action.fromFloor,
+				currentFloor: action.fromFloor,
+				direction: action.direction
+			};
+
+		case ActionTypes.CALLED_INSIDE.type:
+			return {
+				...state,
+				targetFloor: action.toFloor,
+				currentFloor: action.toFloor,
+			};
+		default:
+			return state;
 	}
 }
 
-App.propTypes = {
-	testProp: PropTypes.string.isRequired
-};
+const floors = [0, 1, 2, 3, 4, 5, 6].sort((a,b) => b - a);
 
+function onCallOutside(dispatch,fromFloor, direction){
+	// the direction is used to discern if the elevator stops on call or not
+	// the direction should be the same as the current moving direction
 
-// ELEVATOR
+	dispatch({
+		type: ActionTypes.CALLED_OUTSIDE.type,
+		fromFloor,
+		direction
+	})
+}
 
-/* 
+function onCallInside(dispatch, toFloor){
+	dispatch({
+		type: ActionTypes.CALLED_INSIDE.type,
+		toFloor
+	})
+}
 
-6 floors
-
-- each floor has a panel with 2 buttons up/down
-- elevator panel 0 -> 6
-- max weight 600kg
-- one person 60 kg
-- status logger (overweight, going up, going down)
-- time floor  to floor 3 seconds
-- the lift should stop if requested for same direction on its way to target floor
-
-*/
+function View({ dispatch, state }){
+	const floorsJSX = floors.map(floor =>
+		<div className="floor" key={floor}>
+			<div className={
+				`floor-indicator + ${state.currentFloor == floor ? 'current-floor' : ''}`
+			}>{floor}</div>
+			<div className='buttons'>
+				<button onClick={()=> onCallOutside(dispatch, floor, 'UP')}>UP</button>
+				<button onClick={()=> onCallOutside(dispatch, floor, 'DOWN')}>DOWN</button>
+			</div>
+		</div>
+	);
+	const panel = floors.map(floor=>
+		<button key={floor} onClick={()=> onCallInside(dispatch, floor)}>{floor}</button>
+	)
+	return (
+		<div className='elevator'>
+			<div className='panel'>{panel}</div>
+			<div id='floors'>{floorsJSX}</div>
+		</div>
+	);
+}
