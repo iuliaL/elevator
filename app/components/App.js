@@ -74,7 +74,7 @@ function reducer(state = init, action) {
 		}
 
 		case ActionTypes.START_MOVING.type: {
-			const nextFloor = decideNextFloor(state.currentFloor, state.nextTargetFloor, zero2six);
+			const nextFloor = decideNextFloor(state.currentFloor, state.nextTargetFloor);
 			const newState = {
 				...state,
 				moving: true
@@ -102,15 +102,20 @@ function reducer(state = init, action) {
 		}
 		case ActionTypes.HIT_TARGET_FLOOR.type: {
 			// OPEN THE DOORS and let people go in / out
+			// clear the old target from the stops queue
+			const newStops = state.stops.map((floor, index) =>
+				index === state.nextTargetFloor ? ({ ...floor, stop: false }) : floor, state.stops);
 			const newState = { 
 				...state,
 				doors: 'open',
-				message: 'Hit target floor: let people in/out'
+				message: 'Hit target floor: let people in/out',
+				stops: newStops
+			
 			}
-			const newCmd = Cmd.run(delay, {
+			const newCmd = Cmd.run(delay, { // delay because we open doors
 				successActionCreator: () => {
 					// decide if end moving or reset next target
-					const shouldContinue = state.stops.some(floor => floor.stop === true);
+					const shouldContinue = newStops.some(floor => floor.stop === true);
 					const nextAction = shouldContinue ? ActionTypes.RESET_NEXT_TARGET : ActionTypes.END_MOVING;
 					return nextAction;
 				}
@@ -118,17 +123,14 @@ function reducer(state = init, action) {
 			return loop( newState, newCmd);
 		}
 		case ActionTypes.RESET_NEXT_TARGET.type: {
-			// clear the old target from the stops queue
-			const newStops = state.stops.map((floor, index) =>
-				index === state.nextTargetFloor ? ({ ...floor, stop: false }) : floor, state.stops);
+			
 			const nextTargetFloor =  decideNextTarget(state);
 			const newState = {
 				...state,
 				message: '',
 				doors: 'closed',
 				// here i have to see which is the next target based on current floor AND direction
-				nextTargetFloor,
-				stops: newStops
+				nextTargetFloor
 			}
 			const nextAction = Cmd.action(ActionTypes.START_MOVING);
 			return loop(newState, nextAction);
@@ -152,7 +154,7 @@ function delay(data) {
 		setTimeout(function () {
 			//a promise that is resolved after "delay" milliseconds with the data provided
 			resolve(data);
-		}, 6000);
+		}, 3000);
 	});
 }
 
@@ -168,7 +170,6 @@ function decideNextTarget({ currentFloor, stops, direction } ){
 		console.error('not going down already');
 	}
 
-
 }
 
 function decideNextFloor(current, toFloor) {
@@ -181,6 +182,7 @@ function decideNextFloor(current, toFloor) {
 	} else { // if equals
 		const message = 'You are now at floor ' + current + '. You called the elevator for going to the same floor as you are now.';
 		console.error(message);
+		return current;
 	}
 }
 
@@ -231,14 +233,13 @@ function View({ dispatch, state }) {
 	return (
 		<div className='elevator'>
 			<div>
-				<p className='logger'>Next target : {state.nextTargetFloor}</p>
+				<p>Next target : {state.nextTargetFloor}</p>
 				<p className='logger'>{state.message}</p>
 				<div className='panel'>
 					{panel}
 				</div>
 			</div>
-			<div id='floors'>{floorsJSX}</div>
-
+			<div className='floors'>{floorsJSX}</div>
 		</div>
 
 	);
