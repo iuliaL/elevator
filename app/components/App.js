@@ -4,11 +4,7 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import { Cmd, loop } from 'redux-loop';
 
-export {
-	init,
-	View,
-	reducer
-};
+export { init, View, reducer };
 
 // MODEL
 
@@ -17,35 +13,42 @@ const init = {
 	targetFloor: 0,
 	direction: 'UP',
 	moving: false,
-	stops: []
+	stops: [],
+	message: ''
 };
 
 const ActionTypes = {
-	CALLED_OUTSIDE: { type: 'CALLED OUTSIDE' }, // expects direction, fromFloor
+	// CALLED_OUTSIDE: { type: 'CALLED OUTSIDE' }, // expects direction, fromFloor
 	CALLED_INSIDE: { type: 'CALLED INSIDE' }, // expects toFloor
 	START_MOVING: { type: 'START_MOVING' },
 	END_MOVING: { type: 'END_MOVING' },
+	LOG_MESSAGE: {type: 'LOG_MESSAGE'} // expects message
 };
 
 // UPDATE
 
 function reducer(state = init, action) {
 	switch (action.type) {
-		case ActionTypes.CALLED_OUTSIDE.type: {
-			// this calling from outside is not yet implemented
-			const newState = {
+		case ActionTypes.LOG_MESSAGE.type: {
+			return {
 				...state,
-				targetFloor: action.fromFloor,
-				// currentFloor: action.fromFloor,
-				direction: action.direction
+				message: action.message
 			};
-			return loop(newState, Cmd.none);
 		}
+		// case ActionTypes.CALLED_OUTSIDE.type: {
+		// 	// this calling from outside is not yet implemented
+		// 	const newState = {
+		// 		...state,
+		// 		targetFloor: action.fromFloor,
+		// 		direction: action.direction
+		// 	};
+		// 	return loop(newState, Cmd.none);
+		// }
 
 		case ActionTypes.CALLED_INSIDE.type: {
 			const newState = {
 				...state,
-				stops: [...state.stops, action.toFloor],
+				stops: [...state.stops, action.toFloor], // here we have to optimize the elevator ordering depending on direction
 				targetFloor: action.toFloor
 				// here we'll have another logic on the order and direction
 			};
@@ -94,7 +97,7 @@ function reducer(state = init, action) {
 	}
 }
 
-const floors = [0, 1, 2, 3, 4, 5, 6].reverse();
+const floors = [0, 1, 2, 3, 4, 5, 6].sort(()=> 23); // 23 my birthday
 
 function delay(data) {
 	return new Promise(function (resolve, reject) {
@@ -115,7 +118,8 @@ function decideNextFloor(current, toFloor, floorsArr = floors) {
 	} else if (current < toFloor) {
 		return reverse[currentIndex + 1];
 	} else { // if equals
-		console.error('You are now at floor ' + current + '. You called the elevator for going to the same floor as you are now.')
+		const message = 'You are now at floor ' + current + '. You called the elevator for going to the same floor as you are now.';
+		console.error(message);
 	}
 }
 
