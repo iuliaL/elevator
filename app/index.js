@@ -29,8 +29,6 @@ const ConnectedView = connect(mapStateToProps, mapDispatchToProps)(View);
 const composeEnhancers = window.__REDUX_DEVTOOLS_EXTENSION_COMPOSE__ || compose;
 const store = createStore(reducer, init, composeEnhancers(reduxLoop.install()));
 
-console.log('STORE current state', store.getState());
-
 render(
     <Provider store={store}>
         <ConnectedView />

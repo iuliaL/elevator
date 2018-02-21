@@ -66,7 +66,7 @@ function reducer(state = init, action) {
 				stops, // here we have to optimize the elevator ordering depending on direction
 				nextTargetFloor
 			};
-			// if is moving already wait
+			// if is moving already wait HERE i have to redecide NEXT TARGET !!!
 			// else start moving
 			const nextAction = state.moving ? Cmd.none : ActionTypes.START_MOVING;
 			const newCmd = Cmd.action(nextAction);
@@ -110,7 +110,6 @@ function reducer(state = init, action) {
 				doors: 'open',
 				message: 'Hit target floor: let people in/out',
 				stops: newStops
-			
 			}
 			const newCmd = Cmd.run(delay, { // delay because we open doors
 				successActionCreator: () => {
@@ -123,14 +122,13 @@ function reducer(state = init, action) {
 			return loop( newState, newCmd);
 		}
 		case ActionTypes.RESET_NEXT_TARGET.type: {
-			
-			const nextTargetFloor =  decideNextTarget(state);
+			const [ nextTargetFloor, direction ] =  decideNextTarget(state);
 			const newState = {
 				...state,
 				message: '',
 				doors: 'closed',
-				// here i have to see which is the next target based on current floor AND direction
-				nextTargetFloor
+				nextTargetFloor,
+				direction
 			}
 			const nextAction = Cmd.action(ActionTypes.START_MOVING);
 			return loop(newState, nextAction);
@@ -141,7 +139,8 @@ function reducer(state = init, action) {
 				...state,
 				message: '',
 				moving: false,
-				doors: 'closed'
+				doors: 'closed',
+				nextTargetFloor: null
 			};
 		default: {
 			return state;
@@ -158,18 +157,42 @@ function delay(data) {
 	});
 }
 
-function decideNextTarget({ currentFloor, stops, direction } ){
-	// this fn decides the next floor requested by users
-	// direction is set to 'UP' for now
-	const floors = [...zero2six];
+function decideNextTarget({ currentFloor, stops, direction }){
+	// this fn decides the next floor requested by users and changes direction if needed
 	if (direction === 'UP'){
-		const nearestTarget = stops.find((floor, index) => index > currentFloor && floor.stop === true);
-		const nextTarget = !nearestTarget ? -1 : nearestTarget.number;
-		return nextTarget;
-	} else {
-		console.error('not going down already');
+		// check if any target UP
+		const nearestUP = stops.find(floor => (floor.number > currentFloor) && floor.stop );
+		// if found return it
+		if (nearestUP) {
+			return [ nearestUP.number, 'UP' ];
+		} else {
+			// change direction to DOWN
+			const nearestDOWN = [...stops].reverse().find(floor => (floor.number < currentFloor) && floor.stop );
+			if (nearestDOWN) {
+				return [ nearestDOWN.number, 'DOWN'];
+			} else {
+				console.error('We shouldn`t have arrived here in the 1st place, because there is no next target');
+			}
+		}
+	} else { // direction is DOWN
+		const nearestDOWN = [...stops].reverse().find(floor => {
+			// console.log('current floor', currentFloor,'floor.number',floor.number, 'floor.stop', floor.stop);
+			// console.log(floor.number < currentFloor);
+			return (floor.number < currentFloor) && floor.stop; 
+		});
+		// if found return it
+		if (nearestDOWN) {
+			return [ nearestDOWN.number, 'DOWN' ];
+		} else {
+			// change direction to UP
+			const nearestUP = stops.find(floor => (floor.number > currentFloor) && floor.stop );
+			if (nearestUP) {
+				return [ nearestUP.number, 'UP'];
+			} else {
+				console.error('We shouldn`t have arrived here in the 1st place, because there is no next target');
+			}
+		}
 	}
-
 }
 
 function decideNextFloor(current, toFloor) {
@@ -181,7 +204,7 @@ function decideNextFloor(current, toFloor) {
 		return floors[current + 1];
 	} else { // if equals
 		const message = 'You are now at floor ' + current + '. You called the elevator for going to the same floor as you are now.';
-		console.error(message);
+		console.warn(message);
 		return current;
 	}
 }
@@ -233,7 +256,7 @@ function View({ dispatch, state }) {
 	return (
 		<div className='elevator'>
 			<div>
-				<p>Next target : {state.nextTargetFloor}</p>
+				<p>Next target {state.nextTargetFloor}</p>
 				<p className='logger'>{state.message}</p>
 				<div className='panel'>
 					{panel}
@@ -244,6 +267,3 @@ function View({ dispatch, state }) {
 
 	);
 }
-
-
-// TODO log case when calling elevator for the same floor
