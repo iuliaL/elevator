@@ -149,7 +149,7 @@ function reducer(state = init, action) {
 }
 
 function delay(data) {
-	return new Promise(function (resolve, reject) {
+	return new Promise(function (resolve) {
 		setTimeout(function () {
 			//a promise that is resolved after "delay" milliseconds with the data provided
 			resolve(data);
@@ -171,6 +171,7 @@ function decideNextTarget({ currentFloor, stops, direction }){
 			if (nearestDOWN) {
 				return [ nearestDOWN.number, 'DOWN'];
 			} else {
+				// eslint-disable-next-line no-console
 				console.error('We shouldn`t have arrived here in the 1st place, because there is no next target');
 			}
 		}
@@ -189,6 +190,7 @@ function decideNextTarget({ currentFloor, stops, direction }){
 			if (nearestUP) {
 				return [ nearestUP.number, 'UP'];
 			} else {
+				// eslint-disable-next-line no-console
 				console.error('We shouldn`t have arrived here in the 1st place, because there is no next target');
 			}
 		}
@@ -204,6 +206,7 @@ function decideNextFloor(current, toFloor) {
 		return floors[current + 1];
 	} else { // if equals
 		const message = 'You are now at floor ' + current + '. You called the elevator for going to the same floor as you are now.';
+		// eslint-disable-next-line no-console
 		console.warn(message);
 		return current;
 	}
@@ -266,4 +269,9 @@ function View({ dispatch, state }) {
 		</div>
 
 	);
+}
+
+View.propTypes = {
+	dispatch: PropTypes.func,
+	state: PropTypes.object
 }
