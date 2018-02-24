@@ -16,9 +16,9 @@ const stops = zero2six.map((floor, index) => ({
 // MODEL
 
 const init = {
-	currentFloor: 0,
+	currentFloor: 6,
 	nextTargetFloor: null,
-	direction: 'UP',
+	// direction: 'UP',
 	moving: false,
 	stops: stops,
 	doors: 'closed',
@@ -63,12 +63,14 @@ function reducer(state = init, action) {
 			const stops = state.stops.map((floor, index) =>
 				index === action.toFloor ? ({ ...floor, stop: true }) : floor, state.stops);
 			const nextTargetFloor = state.nextTargetFloor === null ? action.toFloor : state.nextTargetFloor;
+			const initialDirection = action.toFloor > state.currentFloor ? 'UP' : 'DOWN'; // conditions for same floor
+			const direction = state.nextTargetFloor === null ?  initialDirection : state.direction;
 			const newState = {
 				...state,
 				stops,
 				nextTargetFloor,
-				// !!!! if elevator is not at zero the direction will be incorrect
-				message: `Going ${state.direction}. Next floor ${nextTargetFloor}. Doors closing`
+				direction,
+				message: ` Doors closing. Going ${direction}. Next floor ${nextTargetFloor}`
 			};
 			// if is moving already redecide NEXT TARGET !!!
 			// else start moving
@@ -147,7 +149,7 @@ function reducer(state = init, action) {
 			const newState = {
 				...state,
 				doors: 'closed',
-				message: `Going ${direction}. Next floor ${nextTargetFloor}. Doors closing`,
+				message: `Doors closing. Going ${direction}. Next floor ${nextTargetFloor}`,
 				nextTargetFloor,
 				direction
 			}
