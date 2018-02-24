@@ -33,6 +33,7 @@ const ActionTypes = {
 	SET_CURRENT_FLOOR: { type: 'SET_CURRENT_FLOOR' },
 	HIT_TARGET_FLOOR: { type: 'HIT_TARGET_FLOOR' },
 	RESET_NEXT_TARGET: { type: 'RESET_NEXT_TARGET' },
+	DECIDE_NEXT_TARGET: { type: 'DECIDE_NEXT_TARGET' },
 	LOG_MESSAGE: { type: 'LOG_MESSAGE' } // expects message
 };
 
@@ -63,14 +64,26 @@ function reducer(state = init, action) {
 			const nextTargetFloor = state.nextTargetFloor === null ? action.toFloor : state.nextTargetFloor;
 			const newState = {
 				...state,
-				stops, // here we have to optimize the elevator ordering depending on direction
+				stops,
 				nextTargetFloor
 			};
-			// if is moving already wait HERE i have to redecide NEXT TARGET !!!
+			// if is moving already redecide NEXT TARGET !!!
 			// else start moving
-			const nextAction = state.moving ? Cmd.none : ActionTypes.START_MOVING;
+			const nextAction = state.moving ? ActionTypes.DECIDE_NEXT_TARGET : ActionTypes.START_MOVING;
 			const newCmd = Cmd.action(nextAction);
 			return loop(newState, newCmd);
+		}
+		case ActionTypes.DECIDE_NEXT_TARGET.type: {
+			// if the new request is on my way then nextTargetFloor will be the new floor requested 
+			// else do nothing -> just return state
+			const [ nextTargetFloor, direction ] = decideNextTarget(state);
+
+			const newState = {
+				...state,
+				nextTargetFloor,
+				direction
+			};
+			return newState;
 		}
 
 		case ActionTypes.START_MOVING.type: {
