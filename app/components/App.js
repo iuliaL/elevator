@@ -65,7 +65,8 @@ function reducer(state = init, action) {
 			const newState = {
 				...state,
 				stops,
-				nextTargetFloor
+				nextTargetFloor,
+				message: `Going to floor ${nextTargetFloor}. Doors closing`
 			};
 			// if is moving already redecide NEXT TARGET !!!
 			// else start moving
@@ -81,6 +82,7 @@ function reducer(state = init, action) {
 			const newState = {
 				...state,
 				nextTargetFloor,
+				message: `Next floor ${nextTargetFloor}`,
 				direction
 			};
 			return newState;
@@ -121,13 +123,13 @@ function reducer(state = init, action) {
 			const newState = { 
 				...state,
 				doors: 'open',
-				message: 'Hit target floor: let people in/out',
+				message: `Hit target floor ${state.nextTargetFloor}. Doors opening`,
 				stops: newStops
 			}
 			const newCmd = Cmd.run(delay, { // delay because we open doors
 				successActionCreator: () => {
 					// decide if end moving or reset next target
-					const shouldContinue = newStops.some(floor => floor.stop === true);
+					const shouldContinue = state.stops.some(floor => floor.stop === true);
 					const nextAction = shouldContinue ? ActionTypes.RESET_NEXT_TARGET : ActionTypes.END_MOVING;
 					return nextAction;
 				}
@@ -138,8 +140,8 @@ function reducer(state = init, action) {
 			const [ nextTargetFloor, direction ] =  decideNextTarget(state);
 			const newState = {
 				...state,
-				message: '',
 				doors: 'closed',
+				message: `Going to floor ${nextTargetFloor}. Doors closing`,
 				nextTargetFloor,
 				direction
 			}
@@ -272,7 +274,6 @@ function View({ dispatch, state }) {
 	return (
 		<div className='elevator'>
 			<div>
-				<p>Next target {state.nextTargetFloor}</p>
 				<p className='logger'>{state.message}</p>
 				<div className='panel'>
 					{panel}
