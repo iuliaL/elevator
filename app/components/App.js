@@ -66,7 +66,8 @@ function reducer(state = init, action) {
 				...state,
 				stops,
 				nextTargetFloor,
-				message: `Going to floor ${nextTargetFloor}. Doors closing`
+				// !!!! if elevator is not at zero the direction will be incorrect
+				message: `Going ${state.direction}. Next floor ${nextTargetFloor}. Doors closing`
 			};
 			// if is moving already redecide NEXT TARGET !!!
 			// else start moving
@@ -141,7 +142,7 @@ function reducer(state = init, action) {
 			const newState = {
 				...state,
 				doors: 'closed',
-				message: `Going to floor ${nextTargetFloor}. Doors closing`,
+				message: `Going ${direction}. Next floor ${nextTargetFloor}. Doors closing`,
 				nextTargetFloor,
 				direction
 			}
