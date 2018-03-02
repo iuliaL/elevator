@@ -26,15 +26,15 @@ const init = {
 };
 
 const ActionTypes = {
-	// CALLED_OUTSIDE: { type: 'CALLED OUTSIDE' }, // expects direction, fromFloor
-	CALLED_INSIDE: { type: 'CALLED INSIDE' }, // expects toFloor
-	START_MOVING: { type: 'START_MOVING' },
-	END_MOVING: { type: 'END_MOVING' },
-	SET_CURRENT_FLOOR: { type: 'SET_CURRENT_FLOOR' },
-	HIT_TARGET_FLOOR: { type: 'HIT_TARGET_FLOOR' },
-	CLOSE_DOORS: {type: 'CLOSE_DOORS'},
-	RESET_NEXT_TARGET: { type: 'RESET_NEXT_TARGET' },
-	DECIDE_NEXT_TARGET: { type: 'DECIDE_NEXT_TARGET' },
+	CALLED_OUTSIDE: { type: 'CALLED OUTSIDE' }, // expects direction, fromFloor
+	CALLED_INSIDE: { type: 'CALLED INSIDE' }, // expects action.toFloor
+	START_MOVING: { type: 'START_MOVING' }, // expects no other action properties
+	END_MOVING: { type: 'END_MOVING' }, // expects no other action properties
+	SET_CURRENT_FLOOR: { type: 'SET_CURRENT_FLOOR' },  // expects action.toFloor
+	HIT_TARGET_FLOOR: { type: 'HIT_TARGET_FLOOR' }, // expects no other action properties
+	TARGET_FLOOR_STANDBY: {type: 'TARGET_FLOOR_STANDBY'}, // expects no other action properties
+	RESET_NEXT_TARGET: { type: 'RESET_NEXT_TARGET' }, // expects no other action properties
+	DECIDE_NEXT_TARGET: { type: 'DECIDE_NEXT_TARGET' }, // expects no other action properties
 	LOG_MESSAGE: { type: 'LOG_MESSAGE' } // expects message
 };
 
@@ -131,9 +131,9 @@ function reducer(state = init, action) {
 				stops: newStops
 			}
 			
-			return loop( newState, Cmd.action(ActionTypes.CLOSE_DOORS));
+			return loop( newState, Cmd.action(ActionTypes.TARGET_FLOOR_STANDBY));
 		}
-		case ActionTypes.CLOSE_DOORS.type:{
+		case ActionTypes.TARGET_FLOOR_STANDBY.type:{
 			const newCmd = Cmd.run(delay, { // delay because we open doors
 				successActionCreator: () => {
 					// decide if end moving or reset next target
@@ -145,6 +145,7 @@ function reducer(state = init, action) {
 			return loop(state, newCmd);
 		}
 		case ActionTypes.RESET_NEXT_TARGET.type: {
+			// here we close the doors
 			const [ nextTargetFloor, direction ] =  decideNextTarget(state);
 			const newState = {
 				...state,
