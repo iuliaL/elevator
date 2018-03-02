@@ -48,29 +48,43 @@ function reducer(state = init, action) {
 				message: action.message
 			};
 		}
-		// case ActionTypes.CALLED_OUTSIDE.type: {
-		// 	// this calling from outside is not yet implemented
-		// 	const newState = {
-		// 		...state,
-		// 		nextTargetFloor: action.fromFloor,
-		// 		direction: action.direction
-		// 	};
-		// 	return loop(newState, Cmd.none);
-		// }
-
-		case ActionTypes.CALLED_INSIDE.type: {
+		case ActionTypes.CALLED_OUTSIDE.type: {
+			// this calling from outside is not yet implemented
 			// update stops queue
 			const stops = state.stops.map((floor, index) =>
-				index === action.toFloor ? ({ ...floor, stop: true }) : floor, state.stops);
-			const nextTargetFloor = state.nextTargetFloor === null ? action.toFloor : state.nextTargetFloor;
-			const initialDirection = action.toFloor > state.currentFloor ? 'UP' : 'DOWN'; // conditions for same floor
-			const direction = state.nextTargetFloor === null ?  initialDirection : state.direction;
+				index === action.fromFloor ? ({ ...floor, stop: action.direction }) : floor, state.stops);
+			// check if requested direction is equal to the ongoing one 
+			// in order to set this fromFloor as nextTargetFloor else this floor wont be the next stop
+			// come back to this
+			const nextTargetFloor = state.nextTargetFloor === null ? 
+				action.fromFloor : ( action.direction === state.direction ? action.fromFloor : state.nextTargetFloor );
+			const direction = state.direction ? state.direction : action.direction;
+
 			const newState = {
 				...state,
 				stops,
 				nextTargetFloor,
 				direction,
-				message: ` Doors closing. Going ${direction}. Next floor ${nextTargetFloor}`
+				message: `Called from floor ${action.fromFloor}`
+			};
+			const nextAction = state.moving ? ActionTypes.DECIDE_NEXT_TARGET : ActionTypes.START_MOVING;
+			const newCmd = Cmd.action(nextAction);
+			return loop(newState, newCmd);
+		}
+
+		case ActionTypes.CALLED_INSIDE.type: {
+			const nextTargetFloor = state.nextTargetFloor === null ? action.toFloor : state.nextTargetFloor;
+			const initialDirection = action.toFloor > state.currentFloor ? 'UP' : 'DOWN'; // ADD conditions for same floor !!!
+			const direction = state.nextTargetFloor === null ?  initialDirection : state.direction;
+			// update stops queue
+			const stops = state.stops.map((floor, index) =>
+				index === action.toFloor ? ({ ...floor, stop: direction }) : floor, state.stops);
+			const newState = {
+				...state,
+				stops,
+				nextTargetFloor,
+				direction,
+				message: `Doors closing. Going ${direction}. Next floor ${nextTargetFloor}`
 			};
 			// if is moving already redecide NEXT TARGET !!!
 			// else start moving
@@ -137,7 +151,7 @@ function reducer(state = init, action) {
 			const newCmd = Cmd.run(delay, { // delay because we open doors
 				successActionCreator: () => {
 					// decide if end moving or reset next target
-					const shouldContinue = state.stops.some(floor => floor.stop === true);
+					const shouldContinue = state.stops.some(floor => floor.stop);
 					const nextAction = shouldContinue ? ActionTypes.RESET_NEXT_TARGET : ActionTypes.END_MOVING;
 					return nextAction;
 				}
@@ -185,13 +199,13 @@ function decideNextTarget({ currentFloor, stops, direction }){
 	// this fn decides the next floor requested by users and changes direction if needed
 	if (direction === 'UP'){
 		// check if any target UP
-		const nearestUP = stops.find(floor => (floor.number > currentFloor) && floor.stop );
+		const nearestUP = stops.find(floor => (floor.number > currentFloor) && (floor.stop === direction));
 		// if found return it
 		if (nearestUP) {
 			return [ nearestUP.number, 'UP' ];
 		} else {
 			// change direction to DOWN
-			const nearestDOWN = [...stops].reverse().find(floor => (floor.number < currentFloor) && floor.stop );
+			const nearestDOWN = [...stops].reverse().find(floor => (floor.number < currentFloor) && (floor.stop === direction));
 			if (nearestDOWN) {
 				return [ nearestDOWN.number, 'DOWN'];
 			} else {
@@ -203,14 +217,14 @@ function decideNextTarget({ currentFloor, stops, direction }){
 		const nearestDOWN = [...stops].reverse().find(floor => {
 			// console.log('current floor', currentFloor,'floor.number',floor.number, 'floor.stop', floor.stop);
 			// console.log(floor.number < currentFloor);
-			return (floor.number < currentFloor) && floor.stop; 
+			return (floor.number < currentFloor) && (floor.stop === direction); 
 		});
 		// if found return it
 		if (nearestDOWN) {
 			return [ nearestDOWN.number, 'DOWN' ];
 		} else {
 			// change direction to UP
-			const nearestUP = stops.find(floor => (floor.number > currentFloor) && floor.stop );
+			const nearestUP = stops.find(floor => (floor.number > currentFloor) && (floor.stop === direction));
 			if (nearestUP) {
 				return [ nearestUP.number, 'UP'];
 			} else {
