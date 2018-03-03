@@ -318,14 +318,20 @@ function onCallOutside(dispatch, fromFloor, direction) {
 function View({ dispatch, state }) {
 	// FLOORS OUTSIDE
 	const btnOutSideStyle = (floor, direction)=>
-		(state.stops[floor].stop === direction && state.currentFloor != floor) ? { borderColor: '#00e600' } : {}
+		(state.stops[floor].stop === direction && state.currentFloor !== floor) ? { borderColor: '#00e600' } : {}
 
-	const floorsJSX = floors.map(floor =>
+	const doorWidth = (floor) => {
+		return (state.currentFloor === floor) && (state.doors == 'open') ? '0%' : '50%';
+	}
+	const elevator = floors.map(floor =>
 		<div className="floor" key={floor}>
+			<div id='doors'>
+				<div id='left-door' style={ { width: doorWidth(floor) } } />
+				<div id='right-door' style={ { width: doorWidth(floor) } } />
+			</div>
 			<div className={
 				`floor-indicator ${state.currentFloor == floor ? 'current-floor ' : ''}
-				${(state.nextTargetFloor === state.currentFloor) && (state.nextTargetFloor === floor) ? 'target-floor ' : ''}
-			}`
+				${(state.nextTargetFloor === state.currentFloor) && (state.nextTargetFloor === floor) ? 'target-floor ' : ''}`
 			}>{floor}</div>
 			<div className='buttons'>
 				<button
@@ -350,14 +356,14 @@ function View({ dispatch, state }) {
 	}
 	);
 	return (
-		<div className='elevator'>
+		<div className='wrapper'>
 			<div>
 				<p className='logger'>{state.message}</p>
 				<div className='panel'>
 					{panel}
 				</div>
 			</div>
-			<div className='floors'>{floorsJSX}</div>
+			<div className='floors'>{elevator}</div>
 		</div>
 
 	);
