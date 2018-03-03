@@ -15,5 +15,4 @@ Features:
 - rewrite decideNextTarget fn (it's horrible)
 - handle outside requests edge cases
 - solve case when calling elevator for the same floor as the current one
-- add door opening and closing visual feedback
 - simulate elevator translation between floors
