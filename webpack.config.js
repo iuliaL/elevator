@@ -50,7 +50,7 @@ const config = {
 	output: {
 		path: path.resolve(__dirname, 'dist'),
 		filename: 'bundle.js',
-		publicPath: '/' // avoid requesting server route instead of client route when hitting refresh /Cannot GET /route
+		// publicPath: '/' // avoid requesting server route instead of client route when hitting refresh /Cannot GET /route
 	},
 	plugins : [
 		new HtmlWebpackPlugin({
