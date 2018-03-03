@@ -2,12 +2,11 @@
 
 body {
     font-family: $sans;
+    margin: 0;
 }
-
 
 .floors{ 
     border: 7px solid lightgrey;
-    // width: 100px;
 }
 
 .floor{
@@ -22,6 +21,7 @@ body {
         padding: 3.5px 8px;
     }
 }
+
 #doors {
     border: 1px solid rgba($color: #aaa, $alpha: 0.6);
     height: 44px;
@@ -29,7 +29,7 @@ body {
     display: flex;
     justify-content: space-between;
     > div {
-        background: lightseagreen;
+        background: #b9b8b8;
         height: 100%;
         width: 50%;
         border: 1px solid beige;
@@ -50,10 +50,18 @@ body {
 .target-floor{
     color: lighten(green, 20%);
 }
+
 .wrapper{
     display: flex;
-    justify-content: center;
 }
+
+#page {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;    
+}
+
 .logger {
     border: 2px solid #ddd;
     border-radius: 4px;
@@ -64,6 +72,7 @@ body {
     min-height: 70px;
     width: 105px;
 }
+
 .btn {
     cursor: pointer;
     border-width: 2px;
@@ -86,6 +95,12 @@ body {
         border-radius: 20px;
         margin: 3px; 
         font-size: 14px;
+    }
+    p {
+        font-size: 14px;
+        color: grey;
+        text-align: center;
+        width: 100%;
     }
 }
 

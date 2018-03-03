@@ -219,7 +219,7 @@ function checkIfAnotherTargetOnTheWay(thisFloor, stops, direction) { // return B
 		return stops.some(floor => (
 			floor.number > thisFloor) && isRequestedFromInsideOrItsOnTheWay(floor, direction));
 
-	} else if (direction === 'DOWN'){
+	} else if (direction === 'DOWN') {
 		// check if any target DOWN
 		return [...stops].reverse().some(floor =>
 			(floor.number < thisFloor) && isRequestedFromInsideOrItsOnTheWay(floor, direction));
@@ -265,7 +265,7 @@ function decideNextTarget(state) { // returns nextTarget and (new)direction
 		} else {
 			// change direction to UP
 			const nearestUP = stops.find(floor =>
-				( floor.number > currentFloor) && isRequestedFromInsideOrItsOnTheWay(floor, 'UP')
+				(floor.number > currentFloor) && isRequestedFromInsideOrItsOnTheWay(floor, 'UP')
 			);
 			if (nearestUP) {
 				return [nearestUP.number, 'UP'];
@@ -317,7 +317,7 @@ function onCallOutside(dispatch, fromFloor, direction) {
 
 function View({ dispatch, state }) {
 	// FLOORS OUTSIDE
-	const btnOutSideStyle = (floor, direction)=>
+	const btnOutSideStyle = (floor, direction) =>
 		(state.stops[floor].stop === direction && state.currentFloor !== floor) ? { borderColor: '#00e600' } : {}
 
 	const doorWidth = (floor) => {
@@ -326,8 +326,8 @@ function View({ dispatch, state }) {
 	const elevator = floors.map(floor =>
 		<div className="floor" key={floor}>
 			<div id='doors'>
-				<div id='left-door' style={ { width: doorWidth(floor) } } />
-				<div id='right-door' style={ { width: doorWidth(floor) } } />
+				<div id='left-door' style={{ width: doorWidth(floor) }} />
+				<div id='right-door' style={{ width: doorWidth(floor) }} />
 			</div>
 			<div className={
 				`floor-indicator ${state.currentFloor == floor ? 'current-floor ' : ''}
@@ -336,7 +336,7 @@ function View({ dispatch, state }) {
 			<div className='buttons'>
 				<button
 					className='btn'
-					style={btnOutSideStyle(floor,'UP')}
+					style={btnOutSideStyle(floor, 'UP')}
 					onClick={() => onCallOutside(dispatch, floor, 'UP')}>UP</button>
 				<button
 					className='btn'
@@ -346,7 +346,7 @@ function View({ dispatch, state }) {
 		</div>
 	);
 	// PANEL INSIDE
-	const panel = floors.map(floor => {
+	const buttons = floors.map(floor => {
 		const btnInsideStyle = (state.stops[floor].stop === true && state.currentFloor != floor) ? { borderColor: '#00e600' } : {}
 		return <button
 			className='btn'
@@ -355,15 +355,19 @@ function View({ dispatch, state }) {
 			onClick={() => onCallInside(dispatch, floor)}>{floor}</button>;
 	}
 	);
+
 	return (
-		<div className='wrapper'>
-			<div>
-				<p className='logger'>{state.message}</p>
-				<div className='panel'>
-					{panel}
+		<div id='page'>
+			<div className='wrapper'>
+				<div>
+					<p className='logger'>{state.message}</p>
+					<div className='panel'>
+						{buttons}
+						<p>INSIDE PANEL</p>
+					</div>
 				</div>
+				<div className='floors'>{elevator}</div>
 			</div>
-			<div className='floors'>{elevator}</div>
 		</div>
 
 	);

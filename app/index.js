@@ -1,6 +1,6 @@
 'use strict';
 
-import React, { Component } from 'react';
+import React from 'react';
 import { render } from 'react-dom';
 
 //REDUX imports
@@ -9,6 +9,7 @@ import { createStore, compose } from 'redux';
 import * as reduxLoop from 'redux-loop';
 
 // Styles
+// eslint-disable-next-line no-unused-vars
 import scssStyles from './styles/main.scss';
 
 //Components
