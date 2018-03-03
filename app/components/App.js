@@ -16,9 +16,8 @@ const stops = zero2six.map((floor, index) => ({
 // MODEL
 
 const init = {
-	currentFloor: 6,
+	currentFloor: 0,
 	nextTargetFloor: null,
-	// direction: 'UP',
 	moving: false,
 	stops: stops,
 	doors: 'closed',
@@ -32,7 +31,7 @@ const ActionTypes = {
 	END_MOVING: { type: 'END_MOVING' }, // expects no other action properties
 	SET_CURRENT_FLOOR: { type: 'SET_CURRENT_FLOOR' },  // expects action.toFloor
 	HIT_TARGET_FLOOR: { type: 'HIT_TARGET_FLOOR' }, // expects no other action properties
-	TARGET_FLOOR_STANDBY: {type: 'TARGET_FLOOR_STANDBY'}, // expects no other action properties
+	TARGET_FLOOR_STANDBY: { type: 'TARGET_FLOOR_STANDBY' }, // expects no other action properties
 	RESET_NEXT_TARGET: { type: 'RESET_NEXT_TARGET' }, // expects no other action properties
 	DECIDE_NEXT_TARGET: { type: 'DECIDE_NEXT_TARGET' }, // expects no other action properties
 	LOG_MESSAGE: { type: 'LOG_MESSAGE' } // expects message
@@ -56,16 +55,17 @@ function reducer(state = init, action) {
 			// check if requested direction is equal to the ongoing one 
 			// in order to set this fromFloor as nextTargetFloor else this floor wont be the next stop
 			// come back to this
-			const nextTargetFloor = state.nextTargetFloor === null ? 
-				action.fromFloor : ( action.direction === state.direction ? action.fromFloor : state.nextTargetFloor );
-			const direction = state.direction ? state.direction : action.direction;
+			const nextTargetFloor = state.nextTargetFloor === null ?
+				action.fromFloor : (action.direction === state.direction ? action.fromFloor : state.nextTargetFloor);
+			const initialDirection = state.currentFloor < action.fromFloor ? 'UP' : 'DOWN';
+			const direction = state.direction ? state.direction : initialDirection;
 
 			const newState = {
 				...state,
 				stops,
 				nextTargetFloor,
 				direction,
-				message: `Called from floor ${action.fromFloor}`
+				message: `Called from floor ${action.fromFloor} for direction ${action.direction}`
 			};
 			const nextAction = state.moving ? ActionTypes.DECIDE_NEXT_TARGET : ActionTypes.START_MOVING;
 			const newCmd = Cmd.action(nextAction);
@@ -75,10 +75,10 @@ function reducer(state = init, action) {
 		case ActionTypes.CALLED_INSIDE.type: {
 			const nextTargetFloor = state.nextTargetFloor === null ? action.toFloor : state.nextTargetFloor;
 			const initialDirection = action.toFloor > state.currentFloor ? 'UP' : 'DOWN'; // ADD conditions for same floor !!!
-			const direction = state.nextTargetFloor === null ?  initialDirection : state.direction;
+			const direction = state.nextTargetFloor === null ? initialDirection : state.direction;
 			// update stops queue
 			const stops = state.stops.map((floor, index) =>
-				index === action.toFloor ? ({ ...floor, stop: direction }) : floor, state.stops);
+				index === action.toFloor ? ({ ...floor, stop: true }) : floor, state.stops);
 			const newState = {
 				...state,
 				stops,
@@ -93,9 +93,10 @@ function reducer(state = init, action) {
 			return loop(newState, newCmd);
 		}
 		case ActionTypes.DECIDE_NEXT_TARGET.type: {
-			// if the new request is on my way then nextTargetFloor will be the new floor requested 
+			// if the new request is on my way (meaning has sto true or the same direction)
+			// then nextTargetFloor will be the new floor requested 
 			// else do nothing -> just return state
-			const [ nextTargetFloor, direction ] = decideNextTarget(state);
+			const [nextTargetFloor, direction] = decideNextTarget(state);
 
 			const newState = {
 				...state,
@@ -128,9 +129,9 @@ function reducer(state = init, action) {
 				...state,
 				currentFloor: action.toFloor
 			}
-			const nextAction = action.toFloor === state.nextTargetFloor ?
-				Cmd.action(ActionTypes.HIT_TARGET_FLOOR) :
-				Cmd.action(ActionTypes.START_MOVING);
+			const nextAction = checkIfTargetHit(state, action.toFloor)
+				? Cmd.action(ActionTypes.HIT_TARGET_FLOOR)
+				: Cmd.action(ActionTypes.START_MOVING);
 			return loop(newState, nextAction);
 		}
 		case ActionTypes.HIT_TARGET_FLOOR.type: {
@@ -138,16 +139,16 @@ function reducer(state = init, action) {
 			// clear the old target from the stops queue
 			const newStops = state.stops.map((floor, index) =>
 				index === state.nextTargetFloor ? ({ ...floor, stop: false }) : floor, state.stops);
-			const newState = { 
+			const newState = {
 				...state,
 				doors: 'open',
 				message: `Hit target floor ${state.nextTargetFloor}. Doors opening`,
 				stops: newStops
 			}
-			
-			return loop( newState, Cmd.action(ActionTypes.TARGET_FLOOR_STANDBY));
+
+			return loop(newState, Cmd.action(ActionTypes.TARGET_FLOOR_STANDBY));
 		}
-		case ActionTypes.TARGET_FLOOR_STANDBY.type:{
+		case ActionTypes.TARGET_FLOOR_STANDBY.type: {
 			const newCmd = Cmd.run(delay, { // delay because we open doors
 				successActionCreator: () => {
 					// decide if end moving or reset next target
@@ -160,7 +161,7 @@ function reducer(state = init, action) {
 		}
 		case ActionTypes.RESET_NEXT_TARGET.type: {
 			// here we close the doors
-			const [ nextTargetFloor, direction ] =  decideNextTarget(state);
+			const [nextTargetFloor, direction] = decideNextTarget(state);
 			const newState = {
 				...state,
 				doors: 'closed',
@@ -178,6 +179,7 @@ function reducer(state = init, action) {
 				message: '',
 				moving: false,
 				doors: 'closed',
+				direction: null,
 				nextTargetFloor: null
 			};
 		default: {
@@ -195,43 +197,85 @@ function delay(data) {
 	});
 }
 
-function decideNextTarget({ currentFloor, stops, direction }){
-	// this fn decides the next floor requested by users and changes direction if needed
-	if (direction === 'UP'){
+function checkIfTargetHit({ direction, stops, nextTargetFloor }, toFloor) {
+	if (toFloor === nextTargetFloor) {
+		if (stops[toFloor].stop === true) { // if requested from inside
+			return true;
+		} else if (direction === stops[toFloor].stop) { // if requested from outside but on the way
+			return true;
+		} else {
+			// check if there's no other target on the current way(direction)
+			// then i don't care about the outside request direction means i hit the target
+			return !checkIfAnotherTargetOnTheWay(toFloor, stops, direction);
+		}
+	} else {
+		return false;
+	}
+}
+
+function checkIfAnotherTargetOnTheWay(thisFloor, stops, direction) { // return BOOLEAN
+	if (direction === 'UP') {
 		// check if any target UP
-		const nearestUP = stops.find(floor => (floor.number > currentFloor) && (floor.stop === direction));
+		return stops.some(floor => (
+			floor.number > thisFloor) && isRequestedFromInsideOrItsOnTheWay(floor, direction));
+
+	} else if (direction === 'DOWN'){
+		// check if any target DOWN
+		return [...stops].reverse().some(floor =>
+			(floor.number < thisFloor) && isRequestedFromInsideOrItsOnTheWay(floor, direction));
+	} else {
+		// eslint-disable-next-line no-console
+		console.error('Big error if i arrive here.')
+	}
+}
+
+function isRequestedFromInsideOrItsOnTheWay(floor, direction) {
+	return (floor.stop === true) || (floor.stop === direction);
+}
+
+function decideNextTarget(state) { // returns nextTarget and (new)direction
+	// this fn decides the next floor requested by users and changes direction if needed or just returns the same state
+	const { nextTargetFloor, currentFloor, stops, direction } = state;
+	if (direction === 'UP') {
+		// check nearest UP
+		const nearestUP = stops.find(floor =>
+			(floor.number > currentFloor) && isRequestedFromInsideOrItsOnTheWay(floor, direction)
+		);
 		// if found return it
 		if (nearestUP) {
-			return [ nearestUP.number, 'UP' ];
+			return [nearestUP.number, 'UP'];
 		} else {
 			// change direction to DOWN
-			const nearestDOWN = [...stops].reverse().find(floor => (floor.number < currentFloor) && (floor.stop === direction));
+			const nearestDOWN = [...stops].reverse().find(floor =>
+				(floor.number < currentFloor) && isRequestedFromInsideOrItsOnTheWay(floor, 'DOWN')
+			);
 			if (nearestDOWN) {
-				return [ nearestDOWN.number, 'DOWN'];
+				return [nearestDOWN.number, 'DOWN'];
 			} else {
-				// eslint-disable-next-line no-console
-				console.error('We shouldn`t have arrived here in the 1st place, because there is no next target');
+				return [nextTargetFloor, direction];
 			}
 		}
-	} else { // direction is DOWN
-		const nearestDOWN = [...stops].reverse().find(floor => {
-			// console.log('current floor', currentFloor,'floor.number',floor.number, 'floor.stop', floor.stop);
-			// console.log(floor.number < currentFloor);
-			return (floor.number < currentFloor) && (floor.stop === direction); 
-		});
+	} else if (direction === 'DOWN') {
+		const nearestDOWN = [...stops].reverse().find(floor =>
+			(floor.number < currentFloor) && isRequestedFromInsideOrItsOnTheWay(floor, direction)
+		);
 		// if found return it
 		if (nearestDOWN) {
-			return [ nearestDOWN.number, 'DOWN' ];
+			return [nearestDOWN.number, 'DOWN'];
 		} else {
 			// change direction to UP
-			const nearestUP = stops.find(floor => (floor.number > currentFloor) && (floor.stop === direction));
+			const nearestUP = stops.find(floor =>
+				( floor.number > currentFloor) && isRequestedFromInsideOrItsOnTheWay(floor, 'UP')
+			);
 			if (nearestUP) {
-				return [ nearestUP.number, 'UP'];
+				return [nearestUP.number, 'UP'];
 			} else {
-				// eslint-disable-next-line no-console
-				console.error('We shouldn`t have arrived here in the 1st place, because there is no next target');
+				return [nextTargetFloor, direction];
 			}
+
 		}
+	} else {
+		return [nextTargetFloor, direction];
 	}
 }
 
@@ -260,8 +304,6 @@ function onCallInside(dispatch, toFloor) {
 }
 
 function onCallOutside(dispatch, fromFloor, direction) {
-	// this calling from outside is not yet implemented
-
 	// the direction is used to discern if the elevator stops on call or not
 	// the direction should be the same as the current moving direction
 	dispatch({
@@ -274,6 +316,10 @@ function onCallOutside(dispatch, fromFloor, direction) {
 // VIEW
 
 function View({ dispatch, state }) {
+	// FLOORS OUTSIDE
+	const btnOutSideStyle = (floor, direction)=>
+		(state.stops[floor].stop === direction && state.currentFloor != floor) ? { borderColor: '#00e600' } : {}
+
 	const floorsJSX = floors.map(floor =>
 		<div className="floor" key={floor}>
 			<div className={
@@ -282,17 +328,26 @@ function View({ dispatch, state }) {
 			}`
 			}>{floor}</div>
 			<div className='buttons'>
-				<button onClick={() => onCallOutside(dispatch, floor, 'UP')}>UP</button>
-				<button onClick={() => onCallOutside(dispatch, floor, 'DOWN')}>DOWN</button>
+				<button
+					className='btn'
+					style={btnOutSideStyle(floor,'UP')}
+					onClick={() => onCallOutside(dispatch, floor, 'UP')}>UP</button>
+				<button
+					className='btn'
+					style={btnOutSideStyle(floor, 'DOWN')}
+					onClick={() => onCallOutside(dispatch, floor, 'DOWN')}>DOWN</button>
 			</div>
 		</div>
 	);
+	// PANEL INSIDE
 	const panel = floors.map(floor => {
-		const btnStyle = (state.stops[floor].stop && state.currentFloor != floor) ? { borderColor: '#00e600' } : {}
-		return <button key={floor}
-				style={btnStyle}
-				onClick={() => onCallInside(dispatch, floor)}>{floor}</button>;
-		}
+		const btnInsideStyle = (state.stops[floor].stop === true && state.currentFloor != floor) ? { borderColor: '#00e600' } : {}
+		return <button
+			className='btn'
+			key={floor}
+			style={btnInsideStyle}
+			onClick={() => onCallInside(dispatch, floor)}>{floor}</button>;
+	}
 	);
 	return (
 		<div className='elevator'>

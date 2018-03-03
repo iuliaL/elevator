@@ -4,6 +4,7 @@ body {
     font-family: $sans;
 }
 
+
 .floors{ 
     border: 7px solid lightgrey;
     width: 100px;
@@ -19,15 +20,14 @@ body {
     button {
         display: block;
         width: 100%;
-        padding: 4px 8px;
-        cursor: pointer;
+        padding: 3.5px 8px;
     }
 }
 
 .floor-indicator{
     font-size: 20px;
     padding: 10px;
-    border: 1px solid #ddd;
+    border: 2px solid rgba($color: #aaa, $alpha: 0.6);;
     background: white;
 }
 
@@ -51,6 +51,12 @@ body {
     min-height: 70px;
     width: 105px;
 }
+.btn {
+    cursor: pointer;
+    border-width: 2px;
+    border-color: rgba($color: #aaa, $alpha: 0.6);
+    outline: none;
+}
 
 .panel{
     align-self: center;
@@ -67,10 +73,6 @@ body {
         border-radius: 20px;
         margin: 3px; 
         font-size: 14px;
-        cursor: pointer;
-        border-width: 2px;
-        border-color: transparent;
-        outline: none;
     }
 }
 

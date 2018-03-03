@@ -12,10 +12,8 @@ Features:
 
 ## TODO
 
-- solve case when calling elevator for the same floor as the current one
-- error now "console.error('We shouldn`t have arrived here in the 1st place, because there is no next target');"
-
 - rewrite decideNextTarget fn (it's horrible)
-- take requests from the outside (now taking just from inside)
+- handle outside requests edge cases
+- solve case when calling elevator for the same floor as the current one
 - add door opening and closing visual feedback
 - simulate elevator translation between floors
